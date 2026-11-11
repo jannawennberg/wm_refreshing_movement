@@ -42,7 +42,7 @@ const CONFIG = {
     max_cues_per_item: 2,
     blocks_per_mode: 2,               // blocks alternate: e.g. M P M P
     trials_per_level_per_block: 12,   // 3 levels x 12 = 36 trials per block
-    practice_trials_per_level: 2,     // 6 practice trials per mode, 12 total
+    practice_trials_per_level: 1,     // 3 practice trials per mode
 
     // Trial parameters passed to the plugin (same in both modes)
     trial_params: {
@@ -178,7 +178,31 @@ function trialNode(vars, isPractice) {
     };
 }
 
-const practiced = { mental: false, physical: false };
+/* ---------- Practice: a few trials of each type, in block order ---------- */
+timeline.push({
+    type: jsPsychInstructions,
+    pages: ['<p>First, you will practice both versions of the task.</p>'],
+    show_clickable_nav: true,
+    button_label_next: 'Continue',
+});
+
+[firstMode, secondMode].forEach(mode => {
+    timeline.push({
+        type: jsPsychInstructions,
+        pages: ['<p><strong>Practice</strong></p>' + modeInstructions[mode]],
+        show_clickable_nav: true,
+        button_label_next: 'Practice',
+    });
+    timeline.push(trialNode(
+        buildBlockTrials(mode, `practice_${mode}`, CONFIG, CONFIG.practice_trials_per_level, true), true));
+});
+
+timeline.push({
+    type: jsPsychInstructions,
+    pages: ['<p>You have finished the practice. The main task will now begin.</p>'],
+    show_clickable_nav: true,
+    button_label_next: 'Continue',
+});
 
 blockModes.forEach((mode, b) => {
     const blockLabel = `block${b + 1}_${mode}`;
@@ -187,20 +211,8 @@ blockModes.forEach((mode, b) => {
         type: jsPsychInstructions,
         pages: [`<p>Block ${b + 1} of ${blockModes.length}</p>` + modeInstructions[mode]],
         show_clickable_nav: true,
-        button_label_next: practiced[mode] ? 'Start block' : 'Practice',
+        button_label_next: 'Start block',
     });
-
-    if (!practiced[mode]) {
-        practiced[mode] = true;
-        timeline.push(trialNode(
-            buildBlockTrials(mode, `practice_${mode}`, CONFIG, CONFIG.practice_trials_per_level, true), true));
-        timeline.push({
-            type: jsPsychInstructions,
-            pages: ['<p>You have finished the practice for this block type. The main block works the same way.</p>' + modeInstructions[mode]],
-            show_clickable_nav: true,
-            button_label_next: 'Start block',
-        });
-    }
 
     timeline.push(trialNode(
         buildBlockTrials(mode, blockLabel, CONFIG, CONFIG.trials_per_level_per_block, false), false));
