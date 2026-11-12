@@ -108,7 +108,7 @@ var jsPsychInstructedRefreshing = (function (jspsych) {
                     .ir-item.probed { outline: 5px solid #111; }
                     #ir-fix { position: absolute; transform: translate(-50%, -50%);
                               font-size: 24px; text-align: center; user-select: none;
-                              font-family: Georgia, serif; line-height: 1.2; }
+                              font-family: Helvetica, sans-serif; line-height: 1.2; }
                 `;
                 document.head.appendChild(style);
                 ir_css_added = true;
@@ -236,18 +236,22 @@ var jsPsychInstructedRefreshing = (function (jspsych) {
                 api.setTimeout(() => runCue(0), trial.pre_cue_delay);
             };
 
+            const delay_wheel_spin = randSpin();
             const runCue = (step) => {
-                if (step >= seq.length) { api.setTimeout(showProbe, trial.post_cue_delay); return; }
+                if (step >= seq.length) { 
+                    hideWheel();
+                    api.setTimeout(showProbe, trial.post_cue_delay);
+                    return;
+                }
                 const idx = seq[step];
                 const rec = {
                     step: step + 1, cued_index: idx, cued_color: colors[idx],
-                    wheel_spin: null, reported_color: null, error: null, rt: null,
+                    wheel_spin: delay_wheel_spin, reported_color: null, error: null, rt: null,
                 };
                 drawArrow(idx);
                 const onset = performance.now();
 
                 if (physical || trial.show_wheel_in_mental) {
-                    rec.wheel_spin = randSpin();
                     drawWheel(rec.wheel_spin);
                 }
                 if (physical) {
@@ -265,7 +269,7 @@ var jsPsychInstructedRefreshing = (function (jspsych) {
                     deactivateWheel();
                     setItemColor(idx, null);
                     clearArrow();
-                    hideWheel();
+                    
                     if (step + 1 < seq.length) api.setTimeout(() => runCue(step + 1), trial.inter_cue_interval);
                     else runCue(step + 1);
                 }, trial.cue_duration);
@@ -280,7 +284,7 @@ var jsPsychInstructedRefreshing = (function (jspsych) {
                 item(target).classList.add('probed');
                 probeOnset = performance.now();
                 activateWheel(probeSpin, target, (r) => finishProbe(r));
-                fix.style.fontSize = '10px';
+                fix.style.fontSize = '12px';
                 fix.innerHTML = 'Report the probed color';
                 if (trial.probe_max_rt) {
                     api.setTimeout(() => { deactivateWheel(); finishProbe(null); }, trial.probe_max_rt);
@@ -304,7 +308,7 @@ var jsPsychInstructedRefreshing = (function (jspsych) {
                     if (r) drawMarker(r.screenAngle, 2, '#777');
                     fix.style.fontSize = '16px';
                     fix.innerHTML = r ? `You were off by<br>${Math.abs(probeError)} degrees.` : 'Too slow!';
-                    api.setTimeout(endTrial, 1500);
+                    api.setTimeout(endTrial, 750);
                 } else {
                     api.setTimeout(endTrial, 100);
                 }
